@@ -1,5 +1,6 @@
 node_modules
 .env
+gas-reporter.txt
 
 # Hardhat files
 /cache

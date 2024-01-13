@@ -8,6 +8,7 @@ import "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
 error Raffle__SendMoreToEnterRaffle();
 error Raffle__TransactionFailed();
 error Raffle__NotWinnerTime();
+error Raffle__RaffleNotOpen();
 
 contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
     enum RaffleState {
@@ -29,7 +30,7 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
     address private s_recentWinner;
     RaffleState private s_raffleState;
     uint private s_lastTimeStamp;
-    uint private immutable i_interval;
+    uint256 private immutable i_interval;
 
     // EVENTS -----------------------------
     event EnteredRaffle(address indexed _player);
@@ -43,7 +44,7 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         bytes32 _keyHash,
         uint64 _subscriptionId,
         uint32 _callbackGasLimit,
-        uint _interval
+        uint256 _interval
     ) VRFConsumerBaseV2(_vrfCoordinator) {
         i_entranceFees = _entranceFees;
         i_vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
@@ -61,6 +62,9 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
     function enterRaffle() public payable {
         if (msg.value < i_entranceFees) {
             revert Raffle__SendMoreToEnterRaffle();
+        }
+        if (s_raffleState != RaffleState.OPEN) {
+            revert Raffle__RaffleNotOpen();
         }
         s_players.push(payable(msg.sender));
         emit EnteredRaffle(msg.sender);
@@ -139,5 +143,17 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
 
     function getRaffleState() public view returns (RaffleState) {
         return s_raffleState;
+    }
+
+    function getInterval() public view returns (uint256) {
+        return i_interval;
+    }
+
+    function getPlayer(uint _index) public view returns (address) {
+        return s_players[_index];
+    }
+
+    function getLastTimeStamp() public view returns (uint) {
+        return s_lastTimeStamp;
     }
 }
